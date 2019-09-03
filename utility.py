@@ -62,6 +62,24 @@ class Utils:
             print("\n ncodes data already present in the  mentioned folder")
         return ncodes_path
 
+    def subset_ncodes_to_download(self, path_to_ncodes_data):
+        """
+        This function is used to get ncodes sepcified for downloads.
+        Args:
+            path_to_ncodes_data {str}: absolute path to updated ncodes file.
+
+        Returns {pandas-dataframe}: pandas dataframe comprising of ncodes to download
+
+        """
+        print("\nSubset ncodes data as per required ncodes...")
+        # parameter initialization
+        ncodes_data = pd.read_csv(path_to_ncodes_data)
+        # subset required categories
+        self.partial_ncodes_data = ncodes_data[ncodes_data["to_download"] == True]
+        self.partial_ncodes_data = self.partial_ncodes_data.reset_index(drop=True)
+        print()
+        return self.partial_ncodes_data
+
     def download_speed(self):
         """
         This function is used to calculate network download speed
@@ -82,24 +100,6 @@ class Utils:
             return round(FILE_SIZE / time_difference)
         except:
             return False
-
-    def subset_ncodes_to_download(self, path_to_ncodes_data):
-        """
-        This function is used to get ncodes sepcified for downloads.
-        Args:
-            path_to_ncodes_data {str}: absolute path to updated ncodes file.
-
-        Returns {pandas-dataframe}: pandas dataframe comprising of ncodes to download
-
-        """
-        print("\nSubset ncodes data as per required ncode...")
-        # parameter initialization
-        ncodes_data = pd.read_csv(path_to_ncodes_data)
-        # subset required categories
-        self.partial_ncodes_data = ncodes_data[ncodes_data["to_download"] == True]
-        self.partial_ncodes_data = self.partial_ncodes_data.reset_index(drop=True)
-        print()
-        return self.partial_ncodes_data
 
     def get_an_image(self, url_data, folder_path, queue_, max_time=7):
         """
@@ -488,12 +488,10 @@ class Utils:
             else:
                 earlier_report = pd.read_csv(ncode_report_csv_path)
                 # check if data is already present
-                if not len(ncode_dataframe.merge(earlier_report)) == len(ncode_dataframe):
+                if not ncode_dataframe.isin(ncode_dataframe).all().all():
                     ncode_dataframe = earlier_report.append(ncode_dataframe)
                     ncode_dataframe = ncode_dataframe.reset_index(drop=True)
                     ncode_dataframe.to_csv(ncode_report_csv_path, index=False)
-            print(ncode_dataframe)
-
             print("Download complete in {} secs\n\n".format(time.time() - total_start_time))
 
         # comprehensive download report
