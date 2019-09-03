@@ -26,8 +26,8 @@
 weights/**
 **/weights
 
-datasets/**
-**/datasets
+partial_imagenet//**
+**/partial_imagenet/
 
 test_videos/**
 **/test_videos
