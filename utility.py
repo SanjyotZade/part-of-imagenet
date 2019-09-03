@@ -462,7 +462,7 @@ class Utils:
             # if lesser number of images required
             image_urls = image_urls if how_many == -1 else image_urls[:how_many]
             how_many = "all" if how_many == -1 else how_many
-            print("downloading for {} urls\n".format(how_many))
+            print("downloading for {}/{} urls\n".format(how_many, image_urls.shape[0]))
 
             # starting the image download process
             total_start_time = time.time()
