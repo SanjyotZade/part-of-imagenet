@@ -11,6 +11,7 @@ from tqdm import tqdm
 import multiprocessing
 from bs4 import BeautifulSoup
 import urllib
+import requests
 
 
 class Utils:
@@ -122,16 +123,17 @@ class Utils:
             "image_code":image_code,
             "description":""
         }
-
         # starting the image download
         download_start_time = time.time()
         try:
             # opening from the url
-            with urllib.request.urlopen(url, timeout=max_time) as request:
+            # with urllib.request.urlopen(url, timeout=max_time) as request:
+            with requests.get(url, timeout=(max_time, 6*max_time)) as anchor:
                 with open(os.path.join(folder_path, "Images", image_code + ext), 'wb') as f:
                     try:
                         # writing the image to the disk
-                        f.write(request.read())
+                        # f.write(request.read())
+                        f.write(anchor.content)
                     except:
                         #saving error
                         req_time = round(time.time() - download_start_time,1)
@@ -292,11 +294,11 @@ class Utils:
             download_start_time = time.time()
             try:
                 # opening from the url
-                with urllib.request.urlopen(url, timeout=max_time) as request:
+                with requests.get(url, timeout=(max_time, 25 * max_time)) as anchor:
                     with open(os.path.join(folder_path, "Images", image_code + ext), 'wb') as f:
                         try:
                             # writing the image to the disk
-                            f.write(request.read())
+                            f.write(anchor.content)
                         except:
                             # saving error
                             req_time = round(time.time() - download_start_time, 1)
