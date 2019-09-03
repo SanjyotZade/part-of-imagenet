@@ -69,7 +69,6 @@ class Utils:
             path_to_ncodes_data {str}: absolute path to updated ncodes file.
 
         Returns {pandas-dataframe}: pandas dataframe comprising of ncodes to download
-
         """
         print("\nSubset ncodes data as per required ncodes...")
         # parameter initialization
@@ -91,7 +90,7 @@ class Utils:
             URL = "http://speedtest.ftp.otenet.gr/files/test1Mb.db"
             FILE_SIZE = 1048.576
 
-            # downlaod a file to test download spee
+            # downlaod a file to test download speed
             start = time.time()
             file = urllib.request.urlopen(URL, timeout=7)
             file.read()
@@ -134,7 +133,7 @@ class Utils:
                         # writing the image to the disk
                         f.write(request.read())
                     except:
-                        # saving error
+                        #saving error
                         req_time = round(time.time() - download_start_time,1)
                         download_json["time-required"] = req_time
                         download_json["status"] = "SaveError"
@@ -155,6 +154,7 @@ class Utils:
             download_json["status"] = "Error"
             download_json["description"] = str(e)
             queue_.put(download_json)
+
 
     def ncode_image_download_parallelly(self, ncode_data, folder_path, batch_size=None, verbose=True, max_time=7):
         """
@@ -226,6 +226,7 @@ class Utils:
                     report_stats.append(x["status"])
             stats_report.extend(report_stats)
             ncode_report.extend(batch_result)
+
         # stats frequency distribution
         stats_report_json = {x: stats_report.count(x) for x in set(stats_report)}
         _, category_name = os.path.split(folder_path)
@@ -234,7 +235,8 @@ class Utils:
         print()
         total = sum(stats_report_json.values())
         if verbose:
-            print("Success/Present : {}/{}".format(stats_report_json["done"], total))
+            if "done" in stats_report_json.keys():
+                print("Success/Present : {}/{}".format(stats_report_json["done"], total))
         self.report['total'].append(total)
 
         if "Error" in stats_report_json.keys():
@@ -262,7 +264,6 @@ class Utils:
 
         Returns:
             ncode_report {pandas-dataframe}: data containing comprehensive summary about every download.
-
         """
         # variable intialization
         stats_report = list()
@@ -330,7 +331,8 @@ class Utils:
         print()
         total = sum(stats_report_json.values())
         if verbose:
-            print("Success/Present : {}/{}".format(stats_report_json["done"], total))
+            if "done" in stats_report_json.keys():
+                print("Success/Present : {}/{}".format(stats_report_json["done"], total))
         self.report['total'].append(total)
 
         if "Error" in stats_report_json.keys():
@@ -360,7 +362,6 @@ class Utils:
         # select batch size and max-time out based on # cores and download speed
         if d_speed:
             d_speed_constant = d_speed / 100
-
             if d_speed_constant > 4:
                 batch_size = multiprocessing.cpu_count() * 4
                 max_time = 3
