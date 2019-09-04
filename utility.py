@@ -10,7 +10,6 @@ from tqdm import tqdm
 import multiprocessing
 from bs4 import BeautifulSoup
 from urllib.request import urlopen as anchor
-import socket
 
 
 class Utils:
