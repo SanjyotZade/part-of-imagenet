@@ -19,16 +19,16 @@ if __name__ == '__main__':
     optional.add_argument('-url', '--url_data', default=url_data_path, help='path to image-net urls data')
     optional.add_argument('-nc', '--ncode_data', default=ncodes_data_path, help='path to modified ncodes data')
 
-    optional.add_argument('-only', '--with_annotation', default=True, help='downloads images with annotations only')
+    optional.add_argument('-anno', '--with_annotation', default=False, help='downloads images with annotations only')
     optional.add_argument('-p', '--parallel', default=True, help='downloaded parallelly or sequentially')
     optional.add_argument('-v', '--verbose', default=True , help='bool represent whether to display ncode level download stats')
-    optional.add_argument('-b', '--batch', default=None, help='number of images to download paralelly, if parallel is TRUE')
+    optional.add_argument('-b', '--batch_size', default=None, help='number of images to download paralelly, if parallel is TRUE')
 
     args = parser.parse_args()
     args.parallel = eval(str(args.parallel))
     args.with_annotation = eval(str(args.with_annotation))
     args.verbose = eval(str(args.verbose))
-    args.batch = eval(str(args.batch))
+    args.batch_size = eval(str(args.batch_size))
 
     # starting the download process
     util_obj = Utils()
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         only_annotations=args.with_annotation,
         parallel=args.parallel,
         verbose=args.verbose,
-        batch_size_=args.batch
+        batch_size_=args.batch_size
     )
 
     # add readme
