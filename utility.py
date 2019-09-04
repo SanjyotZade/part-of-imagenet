@@ -132,12 +132,12 @@ class Utils:
                     try:
                         # writing the image to the disk
                         f.write(request.read())
-                    except:
+                    except Exception as e:
                         #saving error
                         req_time = round(time.time() - download_start_time,1)
                         download_json["time-required"] = req_time
                         download_json["status"] = "SaveError"
-                        download_json["description"] = "Error while saving"
+                        download_json["description"] = str(e)
                         queue_.put(download_json)
                         return
             # download success
@@ -154,7 +154,6 @@ class Utils:
             download_json["status"] = "Error"
             download_json["description"] = str(e)
             queue_.put(download_json)
-
 
     def ncode_image_download_parallelly(self, ncode_data, folder_path, batch_size=None, verbose=True, max_time=7):
         """
@@ -383,7 +382,21 @@ class Utils:
         return batch_size, max_time
 
     def check_annotations(self, urls_data, annotations_path):
-        return urls_data
+        xml_names = os.listdir(annotations_path)
+        xml_image_codes = [xml_name.split(".")[0] for xml_name in xml_names]
+
+        url_image_codes = urls_data['img_code'].tolist()
+
+        overlap_image_code_rows = [row_num for row_num, url_image_code in enumerate(url_image_codes) if url_image_code in xml_image_codes]
+        trash_xml_no_url = [(xml_name, os.remove(os.path.join(annotations_path, xml_name+".xml"))) for row_num, xml_name in enumerate(xml_image_codes) if xml_name not in url_image_codes]
+        num_trash_xml = len(trash_xml_no_url)
+
+        print("{}/{} image urls have annotations available".format(len(overlap_image_code_rows), len(url_image_codes)))
+        if num_trash_xml:
+            print("{}/{} xml have no image url, deleting.".format(num_trash_xml, len(xml_image_codes)))
+        urls_data_required = urls_data.loc[overlap_image_code_rows]
+        urls_data_required = urls_data_required.reset_index(drop=True)
+        return urls_data_required
 
     def download_partial_imagenet_dataset(self, path_to_url_dataset, path_to_annotations, path_to_save_dataset, only_annotations=False, verbose=True, parallel=True, batch_size_=None):
         """
@@ -459,10 +472,12 @@ class Utils:
             # subset further if only annotated images required
             if only_annotations:
                 image_urls = self.check_annotations(image_urls, os.path.join(folder_path, "Annotation"))
+                how_many = image_urls.shape[0] if how_many == -1 else how_many
+            else:
+                # if lesser number of images required
+                how_many = "all" if how_many == -1 else how_many
 
-            # if lesser number of images required
             image_urls = image_urls if how_many == -1 else image_urls[:how_many]
-            how_many = "all" if how_many == -1 else how_many
             print("downloading for {}/{} urls\n".format(how_many, total_urls))
 
             # starting the image download process
