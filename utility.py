@@ -509,7 +509,8 @@ class Utils:
             files = glob.glob(os.path.join(folder_path, "Annotation", code)+"/*xml")
             for f in files:
                 _, xml_name = os.path.split(f)
-                shutil.move(f, os.path.join(folder_path, "Annotation", xml_name))
+                if not os.path.exists(os.path.join(folder_path, "Annotation", xml_name)):
+                    shutil.move(f, os.path.join(folder_path, "Annotation", xml_name))
             shutil.rmtree(os.path.join(folder_path, "Annotation", code))
 
             # create image dir, subset imagenet-url data for a particular ncode
@@ -525,11 +526,13 @@ class Utils:
                 # if lesser number of images required
                 image_urls = image_urls if how_many == -1 else image_urls[:how_many]
                 how_many = image_urls.shape[0] if how_many == -1 else how_many
+                print("Downloading {}/{} urls with annotation\n".format(how_many, total_urls))
+
             else:
                 image_urls = image_urls if how_many == -1 else image_urls[:how_many]
                 # if lesser number of images required
                 how_many = "all" if how_many == -1 else how_many
-            print("downloading for {}/{} urls\n".format(how_many, total_urls))
+                print("Downloading {}/{} urls\n".format(how_many, total_urls))
 
             # starting the image download process
             total_start_time = time.time()
