@@ -19,7 +19,7 @@ if __name__ == '__main__':
     optional.add_argument('-url', '--url_data', default=url_data_path, help='path to image-net urls data')
     optional.add_argument('-nc', '--ncode_data', default=ncodes_data_path, help='path to modified ncodes data')
 
-    optional.add_argument('-only', '--only', default=False, help='downloads images with annotations only')
+    optional.add_argument('-only', '--only', default=True, help='downloads images with annotations only')
     optional.add_argument('-p', '--parallel', default=True, help='downloaded parallelly or sequentially')
     optional.add_argument('-v', '--verbose', default=True , help='bool represent whether to display ncode level download stats')
     optional.add_argument('-b', '--batch', default=None, help='number of images to download paralelly, if parallel is TRUE')
@@ -37,11 +37,11 @@ if __name__ == '__main__':
         path_to_url_dataset=args.url_data,
         path_to_annotations=args.annotations_dir,
         path_to_save_dataset=args.save_dir,
+        only_annotations=args.only,
         parallel=args.parallel,
         verbose=args.verbose,
         batch_size_=args.batch
     )
 
-    # only annotation download
     # add readme
-
+    # automatic image-url-data download from S3
