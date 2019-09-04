@@ -6,11 +6,11 @@ import glob
 import time
 import shutil
 import pandas as pd
-import urllib.request
 from tqdm import tqdm
 import multiprocessing
 from bs4 import BeautifulSoup
-import urllib
+from urllib.request import urlopen as anchor
+import socket
 
 
 class Utils:
@@ -33,9 +33,7 @@ class Utils:
         This function is used to download ncodes for image-net dataset and restructuring of the same in an csv file.
         Args:
             path_to_save {str}: folder path where the ncodes csv is to be saved.
-
         Returns {str}: absolute path to ncodes csv.
-
         """
         # parameter initialization
         ncodes = pd.DataFrame([])
@@ -45,7 +43,7 @@ class Utils:
         if not os.path.exists(ncodes_path):
             print("\nStarting to download imagenet ncodes...")
             # download ncodes data
-            with urllib.request.urlopen(self.NCODES_DATA_URL) as response:
+            with anchor(self.NCODES_DATA_URL) as response:
                 html = response.read()
                 soup = BeautifulSoup(html, features="lxml")
                 for code_num, link in enumerate(soup.findAll('a')):
@@ -67,7 +65,6 @@ class Utils:
         This function is used to get ncodes sepcified for downloads.
         Args:
             path_to_ncodes_data {str}: absolute path to updated ncodes file.
-
         Returns {pandas-dataframe}: pandas dataframe comprising of ncodes to download
         """
         print("\nSubset ncodes data as per required ncodes...")
@@ -76,13 +73,11 @@ class Utils:
         # subset required categories
         self.partial_ncodes_data = ncodes_data[ncodes_data["to_download"] == True]
         self.partial_ncodes_data = self.partial_ncodes_data.reset_index(drop=True)
-        print()
         return self.partial_ncodes_data
 
     def download_speed(self):
         """
         This function is used to calculate network download speed
-
         Returns {float}: download speed of the connected internet network
         """
         try:
@@ -92,13 +87,140 @@ class Utils:
 
             # downlaod a file to test download speed
             start = time.time()
-            file = urllib.request.urlopen(URL, timeout=7)
+            file = anchor(URL, timeout=7)
             file.read()
             end = time.time()
             time_difference = end - start
             return round(FILE_SIZE / time_difference)
         except:
             return False
+
+    def create_report_json(self, url, image_code, status, spent_time, error_description):
+        """
+        This function is used to created json for image level download repoort.
+        Args:
+            url {str}: url of the input image path
+            image_code {str}: image-code as per image-url data
+            status {str}: status of the image download
+            spent_time {int/str}: time required for image download
+            error_description {exception/str}: description of the error, if any.
+
+        Returns {dict}: json update with download information
+        """
+        download_json = {"url": url, "image_code": image_code}
+        download_json["time-required"] = spent_time
+        download_json["status"] = status
+        download_json["description"] = str(error_description)
+        return download_json
+
+    def ncode_image_download_sequentially(self, ncode_data, folder_path, verbose=True, max_time=7):
+        """
+        This function is used to sequentially download images for a particular ncode(object category).
+        Args:
+            ncode_data {pandas-dataframe}: image-net image urls data for the particular ncode.
+            folder_path {str}: absolute path where downloaded images are to be saved.
+            verbose {bool}: bool represent wheather to show stats for this ncode(object category) data download.
+            max_time {int}: maximum download time that is permitted for an image url.
+
+        Returns:
+            ncode_report {pandas-dataframe}: data containing comprehensive summary about every download.
+        """
+        # variable intialization
+        stats_report = list()
+        ncode_report = list()
+
+        # initiating sequential image download
+        for image_num, url in enumerate(tqdm(ncode_data["img_url"], file=sys.stdout)):
+            image_code = ncode_data.loc[image_num, "img_code"]
+
+            _, ext = os.path.splitext(url)
+            ext = ".jpg" if ext.lower() not in self.IMAGE_FORMATS else ext
+
+            # check if image already present
+            if os.path.exists(os.path.join(folder_path, "Images", image_code + ext)):
+                download_json = self.create_report_json(
+                    url=url,
+                    image_code=image_code,
+                    status="done",
+                    spent_time="-",
+                    error_description="Already present"
+                )
+                stats_report.append("done")
+                ncode_report.append(download_json)
+                continue
+
+            # starting the image download
+            download_start_time = time.time()
+            try:
+                # opening from the url
+                with anchor(url, timeout=max_time) as request:
+                    with open(os.path.join(folder_path, "Images", image_code + ext), 'wb') as f:
+                        try:
+                            # writing the image to the disk
+                            f.write(request.read())
+                        except Exception as e:
+                            # saving error
+                            req_time = round(time.time() - download_start_time, 1)
+                            download_json = self.create_report_json(
+                                url=url,
+                                image_code=image_code,
+                                status="SaveError",
+                                spent_time=req_time,
+                                error_description=str(e)
+                            )
+                            stats_report.append(download_json["status"])
+                            ncode_report.append(download_json)
+                            continue
+
+                # download success
+                req_time = round(time.time() - download_start_time, 1)
+                download_json = self.create_report_json(
+                    url=url,
+                    image_code=image_code,
+                    status="done",
+                    spent_time=req_time,
+                    error_description="Success"
+                )
+            except Exception as e:
+                # save data if error during download process
+                req_time = round(time.time() - download_start_time, 1)
+                download_json = self.create_report_json(
+                    url=url,
+                    image_code=image_code,
+                    status="Error",
+                    spent_time=req_time,
+                    error_description=str(e)
+                )
+
+            stats_report.append(download_json["status"])
+            ncode_report.append(download_json)
+
+
+        # stats frequency distribution
+        stats_report_json = {x: stats_report.count(x) for x in set(stats_report)}
+        _, category_name = os.path.split(folder_path)
+
+        # stats reporting
+        print()
+        total = sum(stats_report_json.values())
+        if verbose:
+            if "done" in stats_report_json.keys():
+                print("Success/Present : {}/{}".format(stats_report_json["done"], total))
+        self.report['total'].append(total)
+
+        if "Error" in stats_report_json.keys():
+            http_error = stats_report_json["Error"]
+            if verbose:
+                print("HTTP/URL/No-image errors : {}/{}".format(http_error, total))
+            self.report['error'].append(http_error)
+
+        if "SaveError" in stats_report_json.keys():
+            save_error = stats_report_json["SaveError"]
+            if verbose:
+                print("Writing errors : {}/{}\n".format(save_error, total))
+            self.report['save_error'].append(save_error)
+
+        return ncode_report
 
     def get_an_image(self, url_data, folder_path, queue_, max_time=7):
         """
@@ -115,19 +237,12 @@ class Utils:
         image_code = url_data[1]
         _, ext = os.path.splitext(url)
         ext = ".jpg" if ext.lower() not in self.IMAGE_FORMATS else ext
-        download_json = {
-            "status":"",
-            "time-required":"",
-            "url":url,
-            "image_code":image_code,
-            "description":""
-        }
 
         # starting the image download
         download_start_time = time.time()
         try:
             # opening from the url
-            with urllib.request.urlopen(url, timeout=max_time) as request:
+            with anchor(url, timeout=max_time) as request:
                 with open(os.path.join(folder_path, "Images", image_code + ext), 'wb') as f:
                     try:
                         # writing the image to the disk
@@ -135,24 +250,36 @@ class Utils:
                     except Exception as e:
                         #saving error
                         req_time = round(time.time() - download_start_time,1)
-                        download_json["time-required"] = req_time
-                        download_json["status"] = "SaveError"
-                        download_json["description"] = str(e)
+                        download_json = self.create_report_json(
+                            url=url,
+                            image_code=image_code,
+                            status="SaveError",
+                            spent_time=req_time,
+                            error_description=str(e)
+                        )
                         queue_.put(download_json)
                         return
             # download success
             req_time = round(time.time() - download_start_time, 1)
-            download_json["time-required"] = req_time
-            download_json["status"] = "done"
-            download_json["description"] = "Success"
+            download_json = self.create_report_json(
+                url=url,
+                image_code=image_code,
+                status="done",
+                spent_time=req_time,
+                error_description="Success"
+            )
             queue_.put(download_json)
 
         except Exception as e:
             # save data if error during download process
             req_time = round(time.time() - download_start_time, 1)
-            download_json["time-required"] = req_time
-            download_json["status"] = "Error"
-            download_json["description"] = str(e)
+            download_json = self.create_report_json(
+                url=url,
+                image_code=image_code,
+                status="Error",
+                spent_time=req_time,
+                error_description=str(e)
+            )
             queue_.put(download_json)
 
     def ncode_image_download_parallelly(self, ncode_data, folder_path, batch_size=None, verbose=True, max_time=7):
@@ -189,7 +316,8 @@ class Utils:
         ncode_report = []
         stats_report = []
         # starting to create asynchronous download processes
-        for batch_data in tqdm(image_urls_batches):
+
+        for batch_data in tqdm(image_urls_batches, file=sys.stdout):
             # initialize variables
             batch_result = []
             report_stats = []
@@ -205,7 +333,15 @@ class Utils:
 
                 # check if image already present
                 if os.path.exists(os.path.join(folder_path, "Images", image_code + ext)):
+                    download_json = self.create_report_json(
+                        url=url,
+                        image_code=image_code,
+                        status="done",
+                        spent_time="-",
+                        error_description="Already present"
+                    )
                     report_stats.append("done")
+                    batch_result.append(download_json)
                     continue
 
                 process = multiprocessing.Process(target=self.get_an_image, args=(url_data, folder_path, queue_, max_time))
@@ -225,7 +361,6 @@ class Utils:
                     report_stats.append(x["status"])
             stats_report.extend(report_stats)
             ncode_report.extend(batch_result)
-
         # stats frequency distribution
         stats_report_json = {x: stats_report.count(x) for x in set(stats_report)}
         _, category_name = os.path.split(folder_path)
@@ -252,101 +387,31 @@ class Utils:
 
         return ncode_report
 
-    def ncode_image_download_sequentially(self, ncode_data, folder_path, verbose=True, max_time=7):
+    def check_annotations(self, urls_data, annotations_path):
         """
-        This function is used to sequentially download images for a particular ncode(object category).
+        This function is used find how many images-url have their corresponding annotation.
         Args:
-            ncode_data {pandas-dataframe}: image-net image urls data for the particular ncode.
-            folder_path {str}: absolute path where downloaded images are to be saved.
-            verbose {bool}: bool represent wheather to show stats for this ncode(object category) data download.
-            max_time {int}: maximum download time that is permitted for an image url.
+            urls_data {panda-datafram}: imagenet url data comprising of image-code level url
+            annotations_path {str}: absolute path to annotation folder
 
-        Returns:
-            ncode_report {pandas-dataframe}: data containing comprehensive summary about every download.
+        Returns {panda-datafram}: updated (subset) image url data
+
         """
-        # variable intialization
-        stats_report = list()
-        ncode_report = list()
+        xml_names = os.listdir(annotations_path)
+        xml_image_codes = [xml_name.split(".")[0] for xml_name in xml_names]
 
-        # initiating sequential image download
-        for image_num, url in enumerate(tqdm(ncode_data["img_url"])):
-            image_code = ncode_data.loc[image_num, "img_code"]
+        url_image_codes = urls_data['img_code'].tolist()
 
-            _, ext = os.path.splitext(url)
-            ext = ".jpg" if ext.lower() not in self.IMAGE_FORMATS else ext
+        overlap_image_code_rows = [row_num for row_num, url_image_code in enumerate(url_image_codes) if url_image_code in xml_image_codes]
+        trash_xml_no_url = [(xml_name, os.remove(os.path.join(annotations_path, xml_name+".xml"))) for row_num, xml_name in enumerate(xml_image_codes) if xml_name not in url_image_codes]
+        num_trash_xml = len(trash_xml_no_url)
 
-            # check if image already present
-            if os.path.exists(os.path.join(folder_path, "Images", image_code + ext)):
-                stats_report.append("done")
-                continue
-
-            download_json = {
-                "status": "",
-                "time-required": "",
-                "url": url,
-                "image_code": image_code,
-                "description": ""
-            }
-            # starting the image download
-            download_start_time = time.time()
-            try:
-                # opening from the url
-                with urllib.request.urlopen(url, timeout=max_time) as request:
-                    with open(os.path.join(folder_path, "Images", image_code + ext), 'wb') as f:
-                        try:
-                            # writing the image to the disk
-                            f.write(request.read())
-                        except:
-                            # saving error
-                            req_time = round(time.time() - download_start_time, 1)
-                            download_json["time-required"] = req_time
-                            download_json["status"] = "SaveError"
-                            download_json["description"] = "Error while saving"
-                            stats_report.append(download_json["status"])
-                            ncode_report.append(download_json)
-                            continue
-
-                # download success
-                req_time = round(time.time() - download_start_time, 1)
-                download_json["time-required"] = req_time
-                download_json["status"] = "done"
-                download_json["description"] = "Success"
-
-            except Exception as e:
-                # save data if error during download process
-                req_time = round(time.time() - download_start_time, 1)
-                download_json["time-required"] = req_time
-                download_json["status"] = "Error"
-                download_json["description"] = str(e)
-
-            stats_report.append(download_json["status"])
-            ncode_report.append(download_json)
-
-        # stats frequency distribution
-        stats_report_json = {x: stats_report.count(x) for x in set(stats_report)}
-        _, category_name = os.path.split(folder_path)
-
-        # stats reporting
-        print()
-        total = sum(stats_report_json.values())
-        if verbose:
-            if "done" in stats_report_json.keys():
-                print("Success/Present : {}/{}".format(stats_report_json["done"], total))
-        self.report['total'].append(total)
-
-        if "Error" in stats_report_json.keys():
-            http_error = stats_report_json["Error"]
-            if verbose:
-                print("HTTP/URL/No-image errors : {}/{}".format(http_error, total))
-            self.report['error'].append(http_error)
-
-        if "SaveError" in stats_report_json.keys():
-            save_error = stats_report_json["SaveError"]
-            if verbose:
-                print("Writing errors : {}/{}\n".format(save_error, total))
-            self.report['save_error'].append(save_error)
-
-        return ncode_report
+        print("{}/{} image urls have annotations available".format(len(overlap_image_code_rows), len(url_image_codes)))
+        if num_trash_xml:
+            print("{}/{} xml have no image url, deleting.".format(num_trash_xml, len(xml_image_codes)))
+        urls_data_required = urls_data.loc[overlap_image_code_rows]
+        urls_data_required = urls_data_required.reset_index(drop=True)
+        return urls_data_required
 
     def calculate_parameters(self):
         """
@@ -381,23 +446,6 @@ class Utils:
             max_time = 7
         return batch_size, max_time
 
-    def check_annotations(self, urls_data, annotations_path):
-        xml_names = os.listdir(annotations_path)
-        xml_image_codes = [xml_name.split(".")[0] for xml_name in xml_names]
-
-        url_image_codes = urls_data['img_code'].tolist()
-
-        overlap_image_code_rows = [row_num for row_num, url_image_code in enumerate(url_image_codes) if url_image_code in xml_image_codes]
-        trash_xml_no_url = [(xml_name, os.remove(os.path.join(annotations_path, xml_name+".xml"))) for row_num, xml_name in enumerate(xml_image_codes) if xml_name not in url_image_codes]
-        num_trash_xml = len(trash_xml_no_url)
-
-        print("{}/{} image urls have annotations available".format(len(overlap_image_code_rows), len(url_image_codes)))
-        if num_trash_xml:
-            print("{}/{} xml have no image url, deleting.".format(num_trash_xml, len(xml_image_codes)))
-        urls_data_required = urls_data.loc[overlap_image_code_rows]
-        urls_data_required = urls_data_required.reset_index(drop=True)
-        return urls_data_required
-
     def download_partial_imagenet_dataset(self, path_to_url_dataset, path_to_annotations, path_to_save_dataset, only_annotations=False, verbose=True, parallel=True, batch_size_=None):
         """
         This function is used to download imagenet images as per the sepcified subset of ncodes dataset.
@@ -413,10 +461,13 @@ class Utils:
 
         """
         # parameter check
-        print("Image-net url dataset not present in mentioned folder. \nPlease download from the link mentioned in Readme.\n", sys.exit())if not os.path.exists(path_to_url_dataset) else 1
-        print("Image-net annotation dataset not present in mentioned folder. \nPlease specify correct annotation path\n", sys.exit()) if not os.path.exists(path_to_annotations) else 1
+        if not os.path.exists(path_to_url_dataset):
+            print("Image-net url dataset not present in mentioned folder.\nPlease download from the link mentioned in Readme.\n")
+            sys.exit()
+        if not os.path.exists(path_to_annotations):
+            print("Image-net annotation dataset not present in mentioned folder.\nPlease specify correct annotation path\n")
+            sys.exit()
         os.mkdir(path_to_save_dataset) if not os.path.exists(path_to_save_dataset) else 1
-
 
         # reading url dataset
         url_data = pd.read_csv(path_to_url_dataset)
@@ -500,15 +551,7 @@ class Utils:
             for data_json in ncode_report:
                 ncode_dataframe = ncode_dataframe.append(data_json, ignore_index=True)
             ncode_report_csv_path = os.path.join(folder_path, category_name + "_download_report.csv")
-            if not os.path.exists(ncode_report_csv_path):
-                ncode_dataframe.to_csv(ncode_report_csv_path, index=False)
-            else:
-                earlier_report = pd.read_csv(ncode_report_csv_path)
-                # check if data is already present
-                if not ncode_dataframe.isin(ncode_dataframe).all().all():
-                    ncode_dataframe = earlier_report.append(ncode_dataframe)
-                    ncode_dataframe = ncode_dataframe.reset_index(drop=True)
-                    ncode_dataframe.to_csv(ncode_report_csv_path, index=False)
+            ncode_dataframe.to_csv(ncode_report_csv_path, index=False)
             print("Download complete in {} secs\n\n".format(time.time() - total_start_time))
 
         # comprehensive download report
