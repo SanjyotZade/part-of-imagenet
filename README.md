@@ -1,4 +1,5 @@
-# part-of-imagenet 
+# part-of-imagenet       <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/tensorhub.svg?style=flat">  
+
 
 This repository an open source project that can help you download **portions of imagenet datasets** within minutes,
 for your personal/profession custom object localization development. Most of the process is automated, all you need 
@@ -6,19 +7,33 @@ to do is **run a few scripts**, **wait for download to complete** and **train yo
 
 ## Imagenet dataset
 
-As well are aware imagenet is a huge dataset and is most popular in object localization benchmarking. However at
+As we are aware imagenet is a huge dataset and is most popular in object localization benchmarking. However at
 times, we only require a subset of annotations&images for a particular category. For example the problem at hand is 
-*"boxes detection in wearhouse's camera feed"*. In this case, download images with annotation from the category 
-**carton** in imagenet dataset and train !
+*"boxes detection in warehouse's camera feed"*. In this case, download images with annotation from the category 
+**"carton"** in imagenet dataset and train !
 
-## Getting started with download  
+## Quick Start
 
+- Download ncode data (manual download [link](http://www.sanjyot.info/)):
+```
+python download_ncodes_imagenet.py
+``` 
+- Download imageNetURLs data [link](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip)
+- Update "to_download" column in ncode data cav
+- Initiate the download for updated object category
+```
+python extract_images_as_per_tags.py
+``` 
 
-Create a virtual environment and install all dependencies as *requirement.txt*. 
+## Comprehensive walk-through and more..
+   
+Create a virtual environment and install all dependencies using *requirement.txt*. 
 
 ### 1. Download ncodes data (one time process)
 **ncodes data** comprising of all the different categories available in imagenet-dataset along with their corresponding
-category code. From the part-of-imagenet folder:
+category code. 
+
+From the project folder, run:
 ```
 python download_ncodes_imagenet.py
 ``` 
@@ -36,14 +51,14 @@ ncode's data can also be downloaded manually from
 http://sanjyot.info
 ```
 ### 2. Download imagenet imageNetURLs data (one time process)
-**imagenet imageURL** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
+**imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
-"imagenet imageURL.zip" is ~500 MB file(It will take some time to download this file). Download and extract the imagenet 
-imageURL.zip file from the link below: 
+imageNetURLs data is ~500 MB file(It will take some time to download this file). Download and extract the imagenet 
+imageNetURLs.zip file from the link below: 
 ```
 http://sanjyot.info
 ```
-or Alternately (code will take some time to download ~500MB), 
+or Alternately, you can also use: (code will take some time to download ~500MB) 
 ```
 python download_ncodes_imagenet.py --with_url_data True
 ```
@@ -66,26 +81,29 @@ The ncode dataset is a csv file comprising of *code, name, to_download* and *how
 - **ncode**:  how many image-urls for an selected categories should be considered for download
 
 i. Mark the category from *"False"* to *"True"* in "to_download" column in ncode data.
+
 ii. Default value in "how_many" column is "-1". Implies it will download from all the available urls.
+
 iii. If you want to consider only "x" number of urls for download, update that number for that particular category in "how_many" column. 
+
 iv. Save the ncode data.
 
-### 4. Initiate the download process
+### 4. Initiate the download process (as required)
 Assumption,
 - **"imageURL.csv"** is present in the same folder as "extract_images_as_per_tags.py" file.
 - **Updated "ncode"** is present in the same folder as "extract_images_as_per_tags.py" file.
 - **Annotation folder** comprising for imagenet xml's as per ncodes is present in the same folder as "extract_images_as_per_tags.py" file.  
 
-Default result folder: Results will be saved to a folder called "partial_imagenet" in the same project folder. If not present,
+Default result folder: Results will be saved to a folder called "partial_imagenet" in the project folder. If not present,
 the folder will be created.
 ```
 python extract_images_as_per_tags.py
 ``` 
 
-**A download report for each ncode(object categpry)** will be saved to the same folder where images and annotations are saved.
+**A download report for each ncode(object category)** will be saved to the same folder where images and annotations are saved.
 
 If you wish to download, only the images which has corresponding annotation. By default more images will be downloaded than
-number of annotation for a particular ncode(object categpry). As imagenet, contains more image-urls than corresponding annotations.
+number of annotation for a particular ncode(object category). As imagenet, contains more image-urls than corresponding annotations.
 
 ```
 python extract_images_as_per_tags.py --with_annotation True
