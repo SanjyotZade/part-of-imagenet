@@ -54,10 +54,8 @@ http://sanjyot.info
 **imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
 imageNetURLs data is ~500 MB file(It will take some time to download this file). Download and extract the imagenet 
-imageNetURLs.zip file from the link below: 
-```
-http://sanjyot.info
-```
+imageNetURLs.zip file from the [link](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
+
 or Alternately, you can also use: (code will take some time to download ~500MB) 
 ```
 python download_ncodes_imagenet.py --with_url_data True
@@ -171,6 +169,6 @@ partial_imagenet
 Note:
 - The network speed (download speed) was taken from "https://fast.com/"
 
-[![Love](https://forthebadge.com/images/badges/built-with-love.svg)](https://github.com/Sanjyot22/CNN-classification-hub)
+[![Love](https://forthebadge.com/images/badges/built-with-love.svg)](https://github.com/SanjyotZade/part-of-imagenet)
 
 *Author:[Sanjyot Zade](http://www.sanjyot.info/)*
