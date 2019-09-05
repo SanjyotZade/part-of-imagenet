@@ -14,11 +14,11 @@ times, we only require a subset of annotations&images for a particular category.
 
 ## Quick Start
 
-- Download ncode data (manual download [link](http://www.sanjyot.info/)):
+- Download ncode data (manual download [ncodes_data](http://www.sanjyot.info/)):
 ```
 python download_ncodes_imagenet.py
 ``` 
-- Download imageNetURLs data [link](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip)
+- Download imageNetURLs data [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip)
 - Update "to_download" column in ncode data cav
 - Initiate the download for updated object category
 ```
@@ -46,15 +46,13 @@ python download_ncodes_imagenet.py --ncodes_dir <path-to-ncode-data-folder>
 
 Note: 
 
-ncode's data can also be downloaded manually from
-```
-http://sanjyot.info
-```
+ncode's data can also be downloaded manually from [ncodes_data](http://sanjyot.info)
+
 ### 2. Download imagenet imageNetURLs data (one time process)
 **imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
 imageNetURLs data is ~500 MB file(It will take some time to download this file). Download and extract the imagenet 
-imageNetURLs.zip file from the [link](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
+imageNetURLs.zip file from the [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
 
 or Alternately, you can also use: (code will take some time to download ~500MB) 
 ```
@@ -112,7 +110,7 @@ There are several other parameters that can be changed as per user's requirement
 is mentioned below. Use the parameters while initiating download process as mentioned in an example above.
 
 **with_annotation**('--with_annotation', default: False): This parameter can used to specify if the user wish to download 
-all the images using complete image-urls or only the images which has corresponding annotation(xml file).
+all the images using complete image-url's or only the images which has corresponding annotation(xml file).
 
 **parallel**('--parallel', default: True): This parameter can used to initiate the download parallelly or sequentially.
 
@@ -160,13 +158,14 @@ partial_imagenet
 
 ## Latency analysis  
 
-| Network speed        |          Categories specified         |                 Download specifications                     |  total download time(mins) |
-|:--------------------:|:-------------------------------------:|:-----------------------------------------------------------:|:--------------------------:|
-|~ 400 MB/sec          | ["hinny", "Siberian husky", "liger"]  | with_annotation=True, parallel=True, downloading all images |                            |
-|~ 100 MB/sec          | ["hinny", "Siberian husky", "liger"]  | with_annotation=True, parallel=True, downloading all images |                            |
-|~ 10 MB/sec           | ["hinny", "Siberian husky", "liger"]  | with_annotation=True, parallel=True, downloading all images |                            |
+| Network speed        |          Categories specified to be downloaded        |                                Download specifications                                 |  total download time(mins) |
+|:--------------------:|:-----------------------------------------------------:|:--------------------------------------------------------------------------------------:|:--------------------------:|
+|~ 400 MB/sec          |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
+|~ 100 MB/sec          |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
+|~ 10 MB/sec           |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
 
 Note:
+- If "with_annotation" is True and "how_many"==x in ncodes csv data for a particular category then "x" number of annotated images will be downloaded.
 - The network speed (download speed) was taken from "https://fast.com/"
 
 [![Love](https://forthebadge.com/images/badges/built-with-love.svg)](https://github.com/SanjyotZade/part-of-imagenet)
