@@ -13,14 +13,14 @@ times, we only require a subset of annotations&images for a particular category.
 **"carton"** in imagenet dataset and train !
 
 ## Quick Start
-
+- Install all dependencies using "requirement.txt".
 - Download ncode data (manual download [ncodes_data](http://www.sanjyot.info/)):
 ```
 python download_ncodes_imagenet.py
 ``` 
-- Download imageNetURLs data [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip)
-- Update "to_download" column in ncode data cav
-- Initiate the download for updated object category
+- Download [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip) data.
+- Update "to_download" column in ncode csv.
+- Initiate the download for the categories updated in ncode csv.
 ```
 python extract_images_as_per_tags.py
 ``` 
@@ -45,10 +45,9 @@ python download_ncodes_imagenet.py --ncodes_dir <path-to-ncode-data-folder>
 ```
 
 Note: 
-
 ncode's data can also be downloaded manually from [ncodes_data](http://sanjyot.info)
 
-### 2. Download imagenet imageNetURLs data (one time process)
+### 2. Download imageNetURLs data (one time process)
 **imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
 imageNetURLs data is ~500 MB file(It will take some time to download this file). Download and extract the imagenet 
@@ -70,11 +69,12 @@ The ncode dataset is a csv file comprising of *code, name, to_download* and *how
 | n02110185   | Siberian husky	           |False         |    -1     |
 | n02391617   | quagga, Equus quagga	   |False         |    -1     |
 | n02129991   | liger	                   |False         |    -1     |
+|     :       | :	                       |:             |    :      |
 
 - **ncode**:  imagenet category codes
 - **name**:  actual name of imagenet category
 - **to_download**:  which categories to download
-- **ncode**:  how many image-urls for an selected categories should be considered for download
+- **how_many**:  how many image-urls for an selected categories should be considered for download
 
 i. Mark the category from *"False"* to *"True"* in "to_download" column in ncode data.
 
