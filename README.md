@@ -165,7 +165,7 @@ partial_imagenet
 |~ 10 MB/sec           |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
 
 Note:
-- If "with_annotation" is True and "how_many"==x in ncodes csv data for a particular category then "x" number of annotated images will be downloaded.
+- If "with_annotation" is True and "how_many" is "x" in "how_many" column in ncodes csv for a particular category then "x" number of annotated images will be downloaded for that category.
 - The network speed (download speed) was taken from "https://fast.com/"
 
 [![Love](https://forthebadge.com/images/badges/built-with-love.svg)](https://github.com/SanjyotZade/part-of-imagenet)
