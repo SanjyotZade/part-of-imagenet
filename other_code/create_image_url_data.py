@@ -1,6 +1,4 @@
 import pandas as pd
-
-
 #url_data_path
 url_data = pd.DataFrame([])
 url_data_path = "/Users/sanjyotzade/Documents/youplus_projects/brand_safety/data_preparation/imageNet/fall11_urls.txt"

@@ -10,7 +10,7 @@ if __name__ == '__main__':
     dir_path = os.path.realpath(os.path.dirname(__file__))
     path_to_annotations = os.path.join(dir_path, "annotation")
     path_to_final_dataset = os.path.join(dir_path, "partial_imagenet")
-    ncodes_data_path = os.path.join(dir_path, "ncodes_.csv")
+    ncodes_data_path = os.path.join(dir_path, "ncodes.csv")
     url_data_path = os.path.join(dir_path, "imageNetUrls.csv")
 
     optional = parser.add_argument_group('optional arguments')
