@@ -10,7 +10,10 @@ from tqdm import tqdm
 import multiprocessing
 from bs4 import BeautifulSoup
 from urllib.request import urlopen as anchor
-
+from urllib.request import urlretrieve
+import requests
+import tarfile
+import math
 
 class Utils:
     """
@@ -18,6 +21,7 @@ class Utils:
     """
     IMAGE_FORMATS = [".jpg", "jpeg", "png", "gif", "tiff", "psd", "pdf", "eps", "ai", "indd"]
     NCODES_DATA_URL = "http://image-net.org/api/text/imagenet.bbox.obtain_synset_wordlist"
+    IMAGE_NET_URL_DATA_LINK = "http://image-net.org/imagenet_data/urls/imagenet_fall11_urls.tgz"
 
     def __init__(self):
         """
@@ -40,12 +44,12 @@ class Utils:
         ncodes_path = os.path.join(path_to_save, "ncodes.csv")
 
         if not os.path.exists(ncodes_path):
-            print("\nStarting to download imagenet ncodes...")
+            print("\nDownloading imagenet ncodes...")
             # download ncodes data
             with anchor(self.NCODES_DATA_URL) as response:
                 html = response.read()
                 soup = BeautifulSoup(html, features="lxml")
-                for code_num, link in enumerate(soup.findAll('a')):
+                for code_num, link in enumerate(tqdm(soup.findAll('a'))):
                     code = (link.get('href').split("wnid=")[-1])
                     values = link.contents[0]
                     ncodes.loc[code_num, "code"] = code
@@ -56,8 +60,82 @@ class Utils:
             ncodes.to_csv(ncodes_path, index=False) # save ncode data
             print("Download complete !\n")
         else:
-            print("\n ncodes data already present in the  mentioned folder")
+            print("\nncodes data already present in the  mentioned folder")
         return ncodes_path
+
+    def download_file(self, url, path_to_save):
+        """
+        This function is used to download a file from url with progress bar.
+        Args:
+            url {str}: http link to the file to download
+            path_to_save {str}: folder path where the urls data is to be saved.
+        Returns {str}: absolute path to image urls data.
+        """
+        local_filename = os.path.join(path_to_save, url.split('/')[-1])
+        # NOTE the stream=True parameter below
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            total_size = int(r.headers.get('content-length', 0))
+            block_size = 8192
+            with open(local_filename, 'wb') as f:
+                for chunk in tqdm(r.iter_content(chunk_size=block_size), total=math.ceil(total_size//block_size), unit='KB', unit_scale=True):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+                        f.flush()
+        return local_filename
+
+    def download_image_net_urls(self, path_to_save=None):
+        """
+        This function is used to imagenet urls data and restructuring of the same in an csv file.
+        Args:
+            path_to_save {str}: folder path where the urls csv is to be saved.
+        Returns {str}: absolute path to image urls csv.
+        """
+        # parameter initialization
+        path_to_save = os.path.realpath(os.path.dirname(__file__)) if path_to_save == None else path_to_save
+        image_urls_csv_path = os.path.join(path_to_save, "imageNetUrls.csv")
+        image_urls_tgz_path = os.path.join(path_to_save, os.path.basename(self.IMAGE_NET_URL_DATA_LINK))
+
+        if not os.path.exists(image_urls_csv_path):
+            if not os.path.exists(image_urls_tgz_path):
+                print("\nDownloading imagenet urls data...")
+                try:
+                    # download imagenet urls data data
+                    self.download_file(self.IMAGE_NET_URL_DATA_LINK, path_to_save)
+                    print("Download complete\n")
+                except Exception as e:
+                    print("Error while downloading image net urls data.")
+                    print(e)
+                    sys.exit()
+            else:
+                print("\nimagenet urls compressed file already present in the  mentioned folder")
+
+            downloaded_file_name = "fall11_urls.txt"
+            url_data_path = os.path.join(path_to_save, downloaded_file_name)
+
+            if not os.path.exists(url_data_path):
+                try:
+                    shutil.unpack_archive(image_urls_tgz_path, path_to_save)
+                    os.remove(image_urls_tgz_path)
+                except Exception as e:
+                    print("Error while extracting imagenet urls from tar file\n")
+                    print (e)
+                    sys.exit()
+
+            url_txt_data = open(url_data_path, "r", encoding="latin1")
+            x = url_txt_data.readlines()
+            url_data_dict = {path.split("\t")[0]: (path.split("\t")[-1]).split("\n")[0] for path in x}
+            url_txt_data.close()
+            os.remove(url_data_path)
+
+            print("\nRestructuring & saving urls data..")
+            url_data = pd.DataFrame(list(url_data_dict.items()), columns=['img_code', 'img_url'])
+            url_data["code"] = url_data['img_code'].str.split('_').str[0]
+            url_data.to_csv(image_urls_csv_path, index=False)
+            print("Imagenet url data csv saved !\n")
+        else:
+            print ("Imagenet urls csv file already present\n")
+        return image_urls_csv_path
 
     def subset_ncodes_to_download(self, path_to_ncodes_data):
         """
