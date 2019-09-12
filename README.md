@@ -14,11 +14,11 @@ times, we only require a subset of annotations&images for a particular category.
 
 ## Quick Start
 - Install all dependencies using "requirement.txt".
-- Download ncode data (manual download [ncodes_data](http://www.sanjyot.info/)):
+- Download ncode & imageNetURLs data(for manual download [ncodes_data](http://www.sanjyot.info/), [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip)):
 ```
-python download_ncodes_imagenet.py
+python download_imagenet_prerequisites.py
 ``` 
-- Download [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip) data.
+Note: 'imageNetURLs' is a ~350KB. It might take some time to download.
 - Update "to_download" column in ncode csv.
 - Initiate the download for the categories updated in ncode csv.
 ```
@@ -35,13 +35,13 @@ category code.
 
 From the project folder, run:
 ```
-python download_ncodes_imagenet.py
+python download_imagenet_prerequisites.py
 ``` 
 
 Default ncodes data will be downloded to project folder. Alternately, you can also specify an folder where to download 
 the ncodes data. 
 ```
-python download_ncodes_imagenet.py --ncodes_dir <path-to-ncode-data-folder>
+python download_imagenet_prerequisites.py --ncodes_dir <path-to-ncode-data-folder>
 ```
 
 Note: 
@@ -50,15 +50,15 @@ ncode's data can also be downloaded manually from [ncodes_data](http://sanjyot.i
 ### 2. Download imageNetURLs data (one time process)
 **imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
-imageNetURLs data is ~500 MB file(It will take some time to download this file). Download and extract the imagenet 
+imageNetURLs data is ~350KB file(It will take some time to download this file). Download and extract the imagenet 
 imageNetURLs.zip file from the [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
 
-or Alternately, you can also use: (code will take some time to download ~500MB) 
+or Alternately, you can also use: (code will take some time to download ~350KB) 
 ```
-python download_ncodes_imagenet.py --with_url_data True
+python download_imagenet_prerequisites.py
 ```
 
-### 3. Marks the categories to download (as required)
+### 3. Mark the categories to download (as required)
 The ncode dataset is a csv file comprising of *code, name, to_download* and *how_many* as columns. 
 
 | code        |          name              |  to_download |  how_many |
