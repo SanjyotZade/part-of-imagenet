@@ -168,6 +168,11 @@ Note:
 - If "with_annotation" is True and "how_many" is "x" in "how_many" column in ncodes csv for a particular category then "x" number of annotated images will be downloaded for that category.
 - The network speed (download speed) was taken from "https://fast.com/"
 
+## Support
+
+Feel free to open an issue on or send along a pull request.
+If you like the work, show your appreciation by "FORK", "STAR", or "SHARE".
+
 [![Love](https://forthebadge.com/images/badges/built-with-love.svg)](https://github.com/SanjyotZade/part-of-imagenet)
 
 *Author:[Sanjyot Zade](http://www.sanjyot.info/)*
