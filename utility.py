@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 import multiprocessing
 from bs4 import BeautifulSoup
+import xml.etree.ElementTree as ET
 from urllib.request import urlopen as anchor
 from urllib.request import urlretrieve
 import requests
@@ -217,7 +218,7 @@ class Utils:
             if os.path.exists(os.path.join(folder_path, "Images", image_code + ext)):
                 download_json = self.create_report_json(
                     url=url,
-                    image_code=image_code,
+                    image_code=image_code + ext,
                     status="done",
                     spent_time="-",
                     error_description="Already present"
@@ -240,7 +241,7 @@ class Utils:
                             req_time = round(time.time() - download_start_time, 1)
                             download_json = self.create_report_json(
                                 url=url,
-                                image_code=image_code,
+                                image_code=image_code + ext,
                                 status="SaveError",
                                 spent_time=req_time,
                                 error_description=str(e)
@@ -253,7 +254,7 @@ class Utils:
                 req_time = round(time.time() - download_start_time, 1)
                 download_json = self.create_report_json(
                     url=url,
-                    image_code=image_code,
+                    image_code=image_code + ext,
                     status="done",
                     spent_time=req_time,
                     error_description="Success"
@@ -263,7 +264,7 @@ class Utils:
                 req_time = round(time.time() - download_start_time, 1)
                 download_json = self.create_report_json(
                     url=url,
-                    image_code=image_code,
+                    image_code=image_code + ext,
                     status="Error",
                     spent_time=req_time,
                     error_description=str(e)
@@ -299,6 +300,27 @@ class Utils:
 
         return ncode_report
 
+    def update_image_net_xml(self, path_to_xml, image_name, category_name):
+        """
+        This function is used to update imagenet xmls as per labelmg xmls.
+        Args:
+            path_to_xml {str}: path to xml file to be updated
+            image_name {str}: image of the image to be update in the xml
+            category_name {str}: category name to be update in the xml
+        Returns: None
+
+        """
+        if os.path.exists(path_to_xml):
+            tree = ET.parse(path_to_xml)
+            root = tree.getroot()
+            for child in root.findall('filename'):
+                child.text = image_name
+            for child in root.findall('object'):
+                if child.find("name").text in image_name:
+                    child.find("name").text = category_name
+            tree.write(path_to_xml)
+        return
+
     def get_an_image(self, url_data, folder_path, queue_, max_time=7):
         """
         This function is used to download an image from its corresponding url.
@@ -329,7 +351,7 @@ class Utils:
                         req_time = round(time.time() - download_start_time,1)
                         download_json = self.create_report_json(
                             url=url,
-                            image_code=image_code,
+                            image_code=image_code + ext,
                             status="SaveError",
                             spent_time=req_time,
                             error_description=str(e)
@@ -340,7 +362,7 @@ class Utils:
             req_time = round(time.time() - download_start_time, 1)
             download_json = self.create_report_json(
                 url=url,
-                image_code=image_code,
+                image_code=image_code + ext,
                 status="done",
                 spent_time=req_time,
                 error_description="Success"
@@ -352,7 +374,7 @@ class Utils:
             req_time = round(time.time() - download_start_time, 1)
             download_json = self.create_report_json(
                 url=url,
-                image_code=image_code,
+                image_code=image_code + ext,
                 status="Error",
                 spent_time=req_time,
                 error_description=str(e)
@@ -412,7 +434,7 @@ class Utils:
                 if os.path.exists(os.path.join(folder_path, "Images", image_code + ext)):
                     download_json = self.create_report_json(
                         url=url,
-                        image_code=image_code,
+                        image_code=image_code + ext,
                         status="done",
                         spent_time="-",
                         error_description="Already present"
@@ -420,7 +442,6 @@ class Utils:
                     report_stats.append("done")
                     batch_result.append(download_json)
                     continue
-
                 process = multiprocessing.Process(target=self.get_an_image, args=(url_data, folder_path, queue_, max_time))
                 processes.append(process)
                 process.start()
@@ -438,6 +459,7 @@ class Utils:
                     report_stats.append(x["status"])
             stats_report.extend(report_stats)
             ncode_report.extend(batch_result)
+
         # stats frequency distribution
         stats_report_json = {x: stats_report.count(x) for x in set(stats_report)}
         _, category_name = os.path.split(folder_path)
@@ -634,6 +656,12 @@ class Utils:
             ncode_report_csv_path = os.path.join(folder_path, category_name + "_download_report.csv")
             ncode_dataframe.to_csv(ncode_report_csv_path, index=False)
             print("Download complete in {} secs\n\n".format(time.time() - total_start_time))
+
+            #update xml data
+            for image_code in ncode_dataframe["image_code"]:
+                name = os.path.splitext(image_code)
+                xml_path = os.path.join(folder_path, "Annotation", name[0]+".xml")
+                self.update_image_net_xml(xml_path, image_code, category_name)
 
         # comprehensive download report
         n_total = sum(self.report['total'])
