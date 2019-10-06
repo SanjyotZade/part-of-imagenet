@@ -43,5 +43,3 @@ if __name__ == '__main__':
         batch_size_=args.batch_size
     )
 
-    # add readme
-    # automatic image-url-data download from S3
