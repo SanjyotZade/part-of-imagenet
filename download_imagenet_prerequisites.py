@@ -13,13 +13,12 @@ if __name__ == '__main__':
     optional.add_argument('-nc_dir', '--ncodes_dir', default=path_to_save, help='path to saved ncodes data')
     optional.add_argument('-url_data', '--with_url_data', default=False, help='tag whether to download url data')
 
-    # downloading
     args = parser.parse_args()
     util_obj = Utils()
+
+    # download ncodes data csv
     util_obj.download_ncodes_image_net(path_to_save=args.ncodes_dir)
 
+    # download imagenet urls csv
     args.url_data = eval(str(args.with_url_data))
-
-    # if args.url_data:
-    # use this to download imagenet urls
     util_obj.download_image_net_urls(path_to_save=args.ncodes_dir)
