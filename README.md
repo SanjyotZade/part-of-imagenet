@@ -18,7 +18,7 @@ times, we only require a subset of annotations&images for a particular category.
 ```
 python download_imagenet_prerequisites.py
 ``` 
-Note: 'imageNetURLs' is a ~350KB. It might take some time to download.
+Note: 'imageNetURLs' is a ~338MB. It might take some time to download. If downloading manually extract csv from zip file.
 - Update "to_download" column in ncode csv.
 - Initiate the download for the categories updated in ncode csv.
 ```
@@ -50,10 +50,10 @@ ncode's data can also be downloaded manually from [ncodes_data](https://model-sp
 ### 2. Download imageNetURLs data (one time process)
 **imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
-imageNetURLs data is ~350KB file(It will take some time to download this file). Download and extract the imagenet 
+imageNetURLs data is ~338 MB file(It will take some time to download this file). Download and extract the imagenet 
 imageNetURLs.zip file from the [imageNetURLs](https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
 
-or Alternately, you can also use: (code will take some time to download ~350KB) 
+or Alternately, you can also use:
 ```
 python download_imagenet_prerequisites.py
 ```
@@ -121,14 +121,14 @@ while data download.
 to set the number of files to be downloaded simultaneously. NOT RECOMMENDED changing this parameter, as the framework itself
 calculate best batch size based on your internet speed and number of cpu core.
 
-**annotations_dir**('--annotations_dir', default: path to "Annotation" folder in project folder): This parameter can be 
-used to set the path for your annotation data folder (if changed).
-
 **save_dir**('--save_dir', default: path to project folder): This parameter can be used to set directory where the 
 downloaded images and corresponding xml's will be saved.
 
+**annotations_dir**('--annotations_dir', default: path to annotation" folder in project folder): This parameter can be 
+used to set the path for your annotation data folder (if changed).
+
 **url_data**('--url_data', default: path to imageNetURLs.csv in project folder): This parameter can be used to specify the 
-path to "mageNetURLs.csv".
+path to "imageNetURLs.csv".
 
 **ncode_data**('--ncode_data', default: path to ncodes.csv in project folder): This parameter can be used to specify the 
 path to "ncodes.csv".
@@ -158,11 +158,11 @@ partial_imagenet
 
 ## Latency analysis  
 
-| Network speed        |          Categories specified to be downloaded        |                                Download specifications                                 |  total download time(mins) |
+| Network speed        |          Categories specified to be downloaded        |                                Download specifications                                 |  total download time(secs) |
 |:--------------------:|:-----------------------------------------------------:|:--------------------------------------------------------------------------------------:|:--------------------------:|
 |~ 400 MB/sec          |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
-|~ 100 MB/sec          |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
-|~ 10 MB/sec           |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |                            |
+|~ 75 MB/sec           |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |           139              |
+|~ 15 MB/sec           |        ["hinny", "Siberian husky", "liger"]           | with_annotation=True, parallel=True, downloading all images(how_many=-1 in codes data) |           289              |
 
 Note:
 - If "with_annotation" is True and "how_many" is "x" in "how_many" column in ncodes csv for a particular category then "x" number of annotated images will be downloaded for that category.
