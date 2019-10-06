@@ -23,7 +23,9 @@ class Utils:
     """
     IMAGE_FORMATS = [".jpg", "jpeg", "png", "gif", "tiff", "psd", "pdf", "eps", "ai", "indd"]
     NCODES_DATA_URL = "http://image-net.org/api/text/imagenet.bbox.obtain_synset_wordlist"
+    NCODES_DATA_S3_URL = "https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/ncodes.csv"
     IMAGE_NET_URL_DATA_LINK = "http://image-net.org/imagenet_data/urls/imagenet_fall11_urls.tgz"
+    IMAGE_NET_URL_DATA_S3_LINK = "https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/imageNetUrls.zip"
 
     def __init__(self):
         """
@@ -47,22 +49,26 @@ class Utils:
 
         if not os.path.exists(ncodes_path):
             print("\nDownloading imagenet ncodes...")
-            # download ncodes data
-            with anchor(self.NCODES_DATA_URL) as response:
-                html = response.read()
-                soup = BeautifulSoup(html, features="lxml")
-                for code_num, link in enumerate(tqdm(soup.findAll('a'))):
-                    code = (link.get('href').split("wnid=")[-1])
-                    values = link.contents[0]
-                    ncodes.loc[code_num, "code"] = code
-                    ncodes.loc[code_num, "name"] = values
-            # add relevant columns to ncode data
-            ncodes["to_download"] = False
-            ncodes["how_many"] = -1
-            ncodes.to_csv(ncodes_path, index=False) # save ncode data
-            print("Download complete !\n")
+            try:
+                self.download_file(self.NCODES_DATA_S3_URL, path_to_save)
+                print("Download complete !\n")
+            except:
+                # download ncodes data
+                with anchor(self.NCODES_DATA_URL) as response:
+                    html = response.read()
+                    soup = BeautifulSoup(html, features="lxml")
+                    for code_num, link in enumerate(tqdm(soup.findAll('a'))):
+                        code = (link.get('href').split("wnid=")[-1])
+                        values = link.contents[0]
+                        ncodes.loc[code_num, "code"] = code
+                        ncodes.loc[code_num, "name"] = values
+                # add relevant columns to ncode data
+                ncodes["to_download"] = False
+                ncodes["how_many"] = -1
+                ncodes.to_csv(ncodes_path, index=False) # save ncode data
+                print("Download complete !\n")
         else:
-            print("\nncodes data already present in the  mentioned folder")
+            print("\nncodes csv already present in the  mentioned folder")
         return ncodes_path
 
     def download_file(self, url, path_to_save):
@@ -99,8 +105,18 @@ class Utils:
         image_urls_tgz_path = os.path.join(path_to_save, os.path.basename(self.IMAGE_NET_URL_DATA_LINK))
 
         if not os.path.exists(image_urls_csv_path):
-            if not os.path.exists(image_urls_tgz_path):
-                print("\nDownloading imagenet urls data...")
+            print("\nDownloading imagenet urls data...")
+            try:
+                zip_path = self.download_file(self.IMAGE_NET_URL_DATA_S3_LINK, path_to_save)
+                try:
+                    shutil.unpack_archive(zip_path, path_to_save)
+                    os.remove(zip_path)
+                    print("Imagenet url data csv saved !\n")
+                except Exception as e:
+                    print("Error while extracting imagenet urls from zip file\n")
+                    print(e)
+                    sys.exit()
+            except:
                 try:
                     # download imagenet urls data data
                     self.download_file(self.IMAGE_NET_URL_DATA_LINK, path_to_save)
@@ -109,32 +125,29 @@ class Utils:
                     print("Error while downloading image net urls data.")
                     print(e)
                     sys.exit()
-            else:
-                print("\nimagenet urls compressed file already present in the  mentioned folder")
+                downloaded_file_name = "fall11_urls.txt"
+                url_data_path = os.path.join(path_to_save, downloaded_file_name)
 
-            downloaded_file_name = "fall11_urls.txt"
-            url_data_path = os.path.join(path_to_save, downloaded_file_name)
+                if not os.path.exists(url_data_path):
+                    try:
+                        shutil.unpack_archive(image_urls_tgz_path, path_to_save)
+                        os.remove(image_urls_tgz_path)
+                    except Exception as e:
+                        print("Error while extracting imagenet urls from tar file\n")
+                        print (e)
+                        sys.exit()
 
-            if not os.path.exists(url_data_path):
-                try:
-                    shutil.unpack_archive(image_urls_tgz_path, path_to_save)
-                    os.remove(image_urls_tgz_path)
-                except Exception as e:
-                    print("Error while extracting imagenet urls from tar file\n")
-                    print (e)
-                    sys.exit()
-
-            url_txt_data = open(url_data_path, "r", encoding="latin1")
-            x = url_txt_data.readlines()
-            url_data_dict = {path.split("\t")[0]: (path.split("\t")[-1]).split("\n")[0] for path in x}
-            url_txt_data.close()
-            os.remove(url_data_path)
-
-            print("\nRestructuring & saving urls data..")
-            url_data = pd.DataFrame(list(url_data_dict.items()), columns=['img_code', 'img_url'])
-            url_data["code"] = url_data['img_code'].str.split('_').str[0]
-            url_data.to_csv(image_urls_csv_path, index=False)
-            print("Imagenet url data csv saved !\n")
+                url_txt_data = open(url_data_path, "r", encoding="latin1")
+                x = url_txt_data.readlines()
+                url_data_dict = {path.split("\t")[0]: (path.split("\t")[-1]).split("\n")[0] for path in x}
+                url_txt_data.close()
+                os.remove(url_data_path)
+                os.remove(image_urls_tgz_path)
+                print("\nRestructuring & saving urls data..")
+                url_data = pd.DataFrame(list(url_data_dict.items()), columns=['img_code', 'img_url'])
+                url_data["code"] = url_data['img_code'].str.split('_').str[0]
+                url_data.to_csv(image_urls_csv_path, index=False)
+                print("Imagenet url data csv saved !\n")
         else:
             print ("Imagenet urls csv file already present\n")
         return image_urls_csv_path
