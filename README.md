@@ -14,7 +14,7 @@ times, we only require a subset of annotations&images for a particular category.
 
 ## Quick Start
 - Install all dependencies using "requirement.txt".
-- Download ncode & imageNetURLs data(for manual download [ncodes_data](http://www.sanjyot.info/), [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip)):
+- Download ncode & imageNetURLs data(for manual download [ncodes_data](https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/ncodes.csv), [imageNetURLs](https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/imageNetUrls.zip)):
 ```
 python download_imagenet_prerequisites.py
 ``` 
@@ -45,13 +45,13 @@ python download_imagenet_prerequisites.py --ncodes_dir <path-to-ncode-data-folde
 ```
 
 Note: 
-ncode's data can also be downloaded manually from [ncodes_data](http://sanjyot.info)
+ncode's data can also be downloaded manually from [ncodes_data](https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/ncodes.csv)
 
 ### 2. Download imageNetURLs data (one time process)
 **imageNetURLs** is a csv file comprising of links to all the images in imagenet dataset as per their ncode's.
 
 imageNetURLs data is ~350KB file(It will take some time to download this file). Download and extract the imagenet 
-imageNetURLs.zip file from the [imageNetURLs](https://model-specific-data.s3.us-east-2.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
+imageNetURLs.zip file from the [imageNetURLs](https://model-specific-public-storage.s3.amazonaws.com/part-of-imagenet/imageNetUrls.zip).
 
 or Alternately, you can also use: (code will take some time to download ~350KB) 
 ```

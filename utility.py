@@ -16,6 +16,7 @@ import requests
 import tarfile
 import math
 
+
 class Utils:
     """
     This class contains all the utility code required to download partial codes and mapping it to relevant image annotations.
